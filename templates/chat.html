@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CuraBot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <span class="watermark" aria-hidden="true">CuraBot</span>
+
+  <main class="app">
+    <header class="head">
+      <div class="who">
+        <div class="badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div>
+          <h1>Chat with CuraBot</h1>
+          <div class="status">Online</div>
+        </div>
+      </div>
+      <button class="new" id="newChat" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="label">New chat</span>
+      </button>
+    </header>
+
+    <div class="scroll" id="scroll">
+      <div class="thread" id="thread">
+        <section class="welcome" id="welcome">
+          <!-- Robot mascot -->
+          <svg class="robot" viewBox="0 0 220 200" aria-hidden="true">
+            <ellipse cx="110" cy="188" rx="44" ry="7" fill="#12a595" opacity=".18"/>
+            <path d="M76 140 Q50 146 46 170" stroke="#12a595" stroke-width="11" stroke-linecap="round" fill="none"/>
+            <path d="M144 140 Q172 136 180 112" stroke="#12a595" stroke-width="11" stroke-linecap="round" fill="none"/>
+            <rect x="76" y="124" width="68" height="54" rx="26" fill="#fff" stroke="#cfe8e3" stroke-width="3"/>
+            <rect x="104" y="138" width="12" height="26" rx="3" fill="#12a595"/>
+            <rect x="97" y="145" width="26" height="12" rx="3" fill="#12a595"/>
+            <line x1="110" y1="36" x2="110" y2="50" stroke="#12a595" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="110" cy="32" r="6" fill="#7fe0d3"/>
+            <circle cx="56" cy="84" r="9" fill="#12a595"/>
+            <circle cx="164" cy="84" r="9" fill="#12a595"/>
+            <rect x="62" y="48" width="96" height="74" rx="34" fill="#fff" stroke="#cfe8e3" stroke-width="3"/>
+            <rect x="72" y="60" width="76" height="48" rx="24" fill="#0f4a43"/>
+            <ellipse cx="94" cy="82" rx="6" ry="8" fill="#8ff5e6"/>
+            <ellipse cx="126" cy="82" rx="6" ry="8" fill="#8ff5e6"/>
+            <path d="M100 96 q10 8 20 0" stroke="#8ff5e6" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <rect x="162" y="8" width="46" height="32" rx="14" fill="#12a595"/>
+            <path d="M170 40 l-4 9 l13 -9z" fill="#12a595"/>
+            <circle cx="175" cy="24" r="3" fill="#fff"/><circle cx="185" cy="24" r="3" fill="#fff"/><circle cx="195" cy="24" r="3" fill="#fff"/>
+          </svg>
+          <p class="hello" id="hello">Hey there,</p>
+          <h2>How can I help you with your health today?</h2>
+          <div class="chips" id="chips">
+            <button class="chip" type="button" data-q="What causes headaches and how can I relieve them?">Headache</button>
+            <button class="chip" type="button" data-q="What are the symptoms and treatments of eczema?">Eczema</button>
+            <button class="chip" type="button" data-q="What can cause persistent weakness and fatigue?">Weakness</button>
+            <button class="chip" type="button" data-q="What causes constipation and how can I treat it?">Constipation</button>
+            <button class="chip" type="button" data-q="Why do muscle cramps happen and how can I prevent them?">Muscle Cramps</button>
+            <button class="chip" type="button" data-q="What are the common causes of body pain?">Pain</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="dock">
+      <form class="composer" id="form" autocomplete="off">
+        <input type="text" id="input" placeholder="Message CuraBot..." aria-label="Your message" required>
+        <button class="send" type="submit" aria-label="Send message">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+        </button>
+      </form>
+      <p class="note">General information only. It does not replace a doctor.</p>
+    </div>
+  </main>
+
+  <script>
+    // Optional: put the user's name here to greet them ("Hey, Isabella,")
+    const USER_NAME = "";
+    if (USER_NAME) document.getElementById("hello").textContent = "Hey, " + USER_NAME + ",";
+
+    const thread = document.getElementById("thread");
+    const scroll = document.getElementById("scroll");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const welcomeHTML = document.getElementById("welcome").outerHTML;
+
+    const MINI = '<div class="mini"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="7" fill="#fff"/><ellipse cx="9" cy="12" rx="1.6" ry="2.2" fill="#0f4a43"/><ellipse cx="15" cy="12" rx="1.6" ry="2.2" fill="#0f4a43"/></svg></div>';
+    const now = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const toBottom = () => { scroll.scrollTop = scroll.scrollHeight; };
+    const escapeHtml = s => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    function removeWelcome() {
+      const w = document.getElementById("welcome");
+      if (w) w.remove();
+      thread.style.justifyContent = "flex-end";
+    }
+
+    function addUser(text) {
+      removeWelcome();
+      const row = document.createElement("div");
+      row.className = "row user";
+      row.innerHTML = '<div class="content"><div class="bubble"></div><div class="time">' + now() + "</div></div>";
+      row.querySelector(".bubble").textContent = text;
+      thread.appendChild(row);
+      toBottom();
+    }
+
+    function addBot(reply) {
+      const row = document.createElement("div");
+      row.className = "row bot";
+      // Plain text keeps its line breaks; HTML replies are rendered as HTML
+      const html = reply.indexOf("<") === -1 ? escapeHtml(reply).replace(/\n/g, "<br>") : reply;
+      row.innerHTML = MINI + '<div class="content"><div class="bubble">' + html + '</div><div class="time">' + now() + "</div></div>";
+      thread.appendChild(row);
+      toBottom();
+    }
+
+    function showTyping() {
+      const row = document.createElement("div");
+      row.className = "row bot";
+      row.innerHTML = MINI + '<div class="content"><div class="bubble typing"><i></i><i></i><i></i></div></div>';
+      thread.appendChild(row);
+      toBottom();
+      return row;
+    }
+
+    async function send(text) {
+      addUser(text);
+      const typing = showTyping();
+      try {
+        const res = await fetch("/get", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ msg: text })
+        });
+        const reply = await res.text();
+        typing.remove();
+        addBot(reply);
+      } catch (err) {
+        typing.remove();
+        addBot("Connection problem. Check that the server is running and try again.");
+      }
+    }
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      send(text);
+    });
+
+    thread.addEventListener("click", e => {
+      const chip = e.target.closest(".chip");
+      if (chip) send(chip.dataset.q);
+    });
+
+    document.getElementById("newChat").addEventListener("click", () => {
+      thread.style.justifyContent = "";
+      thread.innerHTML = welcomeHTML;
+      if (USER_NAME) document.getElementById("hello").textContent = "Hey, " + USER_NAME + ",";
+      input.focus();
+    });
+
+    input.focus();
+  </script>
+</body>
+</html>
